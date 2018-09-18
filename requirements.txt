@@ -1,0 +1,3 @@
+flask
+MicroTokenizer
+flask-cors
