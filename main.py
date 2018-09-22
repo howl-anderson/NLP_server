@@ -1,3 +1,5 @@
+import copy
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
@@ -12,12 +14,16 @@ CORS(app)
 
 
 all_tokenizer_class = {
-    'DAG': ('基于有向无环图的分词方法', tokenizer.cut_by_DAG),
-    'HNM': ('基于隐马尔科夫模型的分词方法', tokenizer.cut_by_HMM),
-    'CRF': ('基于条件随机场的分词方法', tokenizer.cut_by_CRF),
-    'max_match_forward': ('基于最大正向匹配的分词方法', tokenizer.cut_by_max_match_forward),
-    'max_match_backward': ('基于最大反向匹配的分词方法', tokenizer.cut_by_max_match_backward),
-    'max_match_bidirectional': ('基于最大双向匹配的分词方法', tokenizer.cut_by_max_match_bidirectional)
+    'DAG': ('基于有向无环图的分词方法', tokenizer.cut_by_DAG, tokenizer.dag_tokenizer.graph_builder),
+    'HNM': ('基于隐马尔科夫模型的分词方法', tokenizer.cut_by_HMM, None),
+    'CRF': ('基于条件随机场的分词方法', tokenizer.cut_by_CRF, None),
+    'max_match_forward': ('基于最大正向匹配的分词方法', tokenizer.cut_by_max_match_forward, tokenizer.max_match_forward_tokenizer),
+    'max_match_backward': ('基于最大反向匹配的分词方法', tokenizer.cut_by_max_match_backward, tokenizer.max_match_backward_tokenizer),
+    'max_match_bidirectional': ('基于最大双向匹配的分词方法', tokenizer.cut_by_max_match_bidirectional, None)
+}
+
+dict_based_tokenizer = {
+    k: v for k, v in all_tokenizer_class.items() if k in ('DAG', 'max_match_forward', 'max_match_backward')
 }
 
 
@@ -30,8 +36,62 @@ def single_tokenizer():
         # TODO
         raise ValueError()
 
-    tokenizer_class_object = all_tokenizer_class[tokenizer_class][1]
-    segment_result = tokenizer_class_object(message)
+    tokenizer_func = all_tokenizer_class[tokenizer_class][1]
+    segment_result = tokenizer_func(message)
+
+    return jsonify(segment_result)
+
+
+def parse_custom_dict(custom_dict_str):
+    if not custom_dict_str:
+        return []
+
+    custom_dict = []
+
+    for i in custom_dict_str.split('\n'):
+        token_plus = i.split()
+        if len(token_plus) > 1:
+            token, weight = token_plus
+            token = str(token)
+        else:
+            token = str(token_plus[0])
+            weight = 1
+
+        custom_dict.append((token, weight))
+
+    print(custom_dict)
+
+    return custom_dict
+
+
+@app.route("/single_tokenizer_with_custom_dict", methods=['GET'])
+def single_tokenizer_with_custom_dict():
+    tokenizer_class = request.args.get('tokenizer_class')
+    message = request.args.get('message')
+    custom_dict_str = request.args.get('custom_dict')
+
+    custom_dict = parse_custom_dict(custom_dict_str)
+
+    if tokenizer_class not in dict_based_tokenizer:
+        # TODO
+        raise ValueError()
+
+    tokenizer_func = all_tokenizer_class[tokenizer_class][1]
+    tokenizer_class_object = all_tokenizer_class[tokenizer_class][2]
+
+    dict_data = copy.deepcopy(tokenizer_class_object.dict_data)
+    origin_dict_data = tokenizer_class_object.dict_data
+
+    for token, weight in custom_dict:
+        dict_data.add_token_and_weight(token, weight)
+
+    # assign dict_data to tokenizer
+    tokenizer_class_object.dict_data = dict_data
+
+    segment_result = tokenizer_func(message)
+
+    # restore dict_data to origin
+    tokenizer_class_object.dict_data = origin_dict_data
 
     return jsonify(segment_result)
 
@@ -39,6 +99,12 @@ def single_tokenizer():
 @app.route("/list_tokenizer", methods=['GET'])
 def list_tokenizer():
     tokenizer_info = {k: v[0] for k, v in all_tokenizer_class.items()}
+    return jsonify(tokenizer_info)
+
+
+@app.route("/list_dict_based_tokenizer", methods=['GET'])
+def list_dict_based_tokenizer():
+    tokenizer_info = {k: v[0] for k, v in dict_based_tokenizer.items()}
     return jsonify(tokenizer_info)
 
 
