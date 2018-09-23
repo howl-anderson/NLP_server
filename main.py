@@ -53,6 +53,7 @@ def parse_custom_dict(custom_dict_str):
         if len(token_plus) > 1:
             token, weight = token_plus
             token = str(token)
+            weight = int(weight)
         else:
             token = str(token_plus[0])
             weight = 1
@@ -94,6 +95,27 @@ def single_tokenizer_with_custom_dict():
     tokenizer_class_object.dict_data = origin_dict_data
 
     return jsonify(segment_result)
+
+
+@app.route("/tokenizer_with_fusion", methods=['GET'])
+def tokenizer_with_fusion():
+    tokenizer_class_list = request.args.getlist('tokenizer_class_list[]')
+    print(tokenizer_class_list)
+    message = request.args.get('message')
+
+    if all(i not in all_tokenizer_class for i in tokenizer_class_list):
+        # TODO
+        raise ValueError()
+
+    solutions = []
+    for tokenizer_class in tokenizer_class_list:
+        tokenizer_func = all_tokenizer_class[tokenizer_class][1]
+        segment_result = tokenizer_func(message)
+        solutions.append(segment_result)
+
+    best_solution = tokenizer.joint_solutions(solutions)
+
+    return jsonify(best_solution)
 
 
 @app.route("/list_tokenizer", methods=['GET'])
