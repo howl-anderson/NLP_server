@@ -8,7 +8,7 @@ import MicroTokenizer
 tokenizer_loader = MicroTokenizer.load('core_pd_md')
 tokenizer = tokenizer_loader.get_tokenizer()
 
-app = Flask(__name__, static_url_path='/Users/howl/WebstormProjects/NLP_server_frontend')
+app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 CORS(app)
 
