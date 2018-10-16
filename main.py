@@ -14,10 +14,15 @@ app.config['DEBUG'] = True
 CORS(app)
 
 
+from MicroTokenizer.dnn.seq2label.client import HTTPClient
+
+seq2label_client = HTTPClient("seq2label_tokenizer.xiaoquankong.ai")
+
 all_tokenizer_class = {
     'DAG': ('基于有向无环图的分词方法', tokenizer.cut_by_DAG, tokenizer.dag_tokenizer.graph_builder),
     'HNM': ('基于隐马尔科夫模型的分词方法', tokenizer.cut_by_HMM, None),
     'CRF': ('基于条件随机场的分词方法', tokenizer.cut_by_CRF, None),
+    'BiLSTM+CRF': ('基于 BiLSTM+CRF 的分词方法', seq2label_client.segment, None),
     'max_match_forward': ('基于最大正向匹配的分词方法', tokenizer.cut_by_max_match_forward, tokenizer.max_match_forward_tokenizer),
     'max_match_backward': ('基于最大反向匹配的分词方法', tokenizer.cut_by_max_match_backward, tokenizer.max_match_backward_tokenizer),
     'max_match_bidirectional': ('基于最大双向匹配的分词方法', tokenizer.cut_by_max_match_bidirectional, None)
