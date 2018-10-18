@@ -16,7 +16,7 @@ CORS(app)
 
 from MicroTokenizer.dnn.seq2label.client import HTTPClient
 
-seq2label_client = HTTPClient("seq2label_tokenizer.xiaoquankong.ai")
+seq2label_client = HTTPClient("seq2label_tokenizer.xiaoquankong.ai", port=80)
 
 all_tokenizer_class = {
     'DAG': ('基于有向无环图的分词方法', tokenizer.cut_by_DAG, tokenizer.dag_tokenizer.graph_builder),
