@@ -5,7 +5,10 @@ from flask_cors import CORS
 
 import MicroTokenizer
 
-tokenizer_loader = MicroTokenizer.load('core_pd_md')
+import core_pd_md
+
+# tokenizer_loader = MicroTokenizer.load('core_pd_md')
+tokenizer_loader = core_pd_md.load()
 tokenizer = tokenizer_loader.get_tokenizer()
 
 app = Flask(__name__)
