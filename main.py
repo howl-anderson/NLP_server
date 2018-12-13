@@ -1,4 +1,5 @@
 import copy
+import os
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -19,7 +20,11 @@ CORS(app)
 
 from MicroTokenizer.dnn.seq2label.client import HTTPClient
 
-seq2label_client = HTTPClient("seq2label_tokenizer.xiaoquankong.ai", port=80)
+host = os.getenv('SEQ2LABEL_API_HOST', 'seq2label_tokenizer.xiaoquankong.ai')
+port = os.getenv('SEQ2LABEL_API_PORT', 80)
+url_prefix = os.getenv('SEQ2LABEL_API_URL_PREFIX', '')
+
+seq2label_client = HTTPClient(host=host, port=port, url_prefix=url_prefix)
 
 all_tokenizer_class = {
     'DAG': ('基于有向无环图的分词方法', tokenizer.cut_by_DAG, tokenizer.dag_tokenizer.graph_builder),
